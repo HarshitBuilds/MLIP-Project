@@ -1,0 +1,52 @@
+units         metal
+atom_style    atomic
+atom_modify   map yes
+newton        on
+boundary      p p p
+
+read_data     lammps.data  # Your LAMMPS data file
+
+# Define atom masses (update with correct values)
+mass 1 35.45   # Mass of Cl in amu
+mass 2 95.95   # Mass of Mo in amu
+
+# Define lambda (adjust this manually or via an external loop/script)
+#variable      lambda equal "0"
+
+# Only use MACE as pair style
+pair_style    mace no_domain_decomposition
+pair_coeff    * * 3mo3cl_mace_compiled.model-lammps.pt Cl Mo
+
+
+# Compute MACE potential energy
+#compute       umace all pair mace
+#variable      um equal "c_umace"
+
+# Tether atoms to their initial positions with a spring potential
+
+#fix           tether all spring/self 500
+#variable      us equal "f_tether"
+
+# Fix the center of mass to avoid drift
+fix           comfix all recenter INIT INIT INIT units box
+compute msd_atoms all msd
+# Combine spring and mace energy using lambda
+#variable      utotal equal "v_lambda*v_um + (1.0 - v_lambda)*(v_um+v_us)"
+
+# Thermo output
+thermo        100
+thermo_style  custom step temp pe c_msd_atoms[4]
+log thermo_output.txt
+
+# Equilibration (NVT for 2000 steps at 300K)
+velocity all create 800.0 12345 loop geom
+fix           nvt_fix all nvt temp 800.0 800.0 $(100.0*dt)
+timestep      0.001
+run           2000
+unfix         nvt_fix
+
+# Main simulation to collect data
+dump 1 all custom 100 spring_trajectory.lammpstrj id type x y z vx vy vz
+fix           nvt_prod all nvt temp 800.0 800.0 $(100.0*dt)
+run           1000000
+
