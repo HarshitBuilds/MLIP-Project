@@ -15,7 +15,7 @@ mass 2 95.95   # Mass of Mo in amu
 
 # Only use MACE as pair style
 pair_style    mace no_domain_decomposition
-pair_coeff    * * 3mo3cl_mace_compiled.model-lammps.pt Cl Mo
+pair_coeff    * * 3mo6cl_mace_compiled.model-lammps.pt Cl Mo
 
 
 # Compute MACE potential energy
@@ -36,7 +36,7 @@ compute msd_atoms all msd
 # Thermo output
 thermo        100
 thermo_style  custom step temp pe c_msd_atoms[4]
-log thermo_output.txt
+log thermo_output_3Mo6Cl.txt
 
 # Equilibration (NVT for 2000 steps at 300K)
 velocity all create 800.0 12345 loop geom
@@ -45,8 +45,8 @@ timestep      0.001
 run           2000
 unfix         nvt_fix
 
-# Main simulation to collect data
-dump 1 all custom 100 spring_trajectory.lammpstrj id type x y z vx vy vz
+# Main simulation to collect data (Production run)
+dump 1 all custom 100 spring_trajectory_3Mo6Cl.lammpstrj id type x y z vx vy vz
 fix           nvt_prod all nvt temp 800.0 800.0 $(100.0*dt)
 run           1000000
 
